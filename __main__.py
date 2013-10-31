@@ -87,9 +87,7 @@ if __name__ == '__main__':
 
             # Point to the tag comparison page.
             pbcopy(github_url(team, repo,
-                              '/compare/{previous_tag}/{tag}'.format(
-                                  team=team,
-                                  repo=repo,
+                              '/compare/{previous_tag}...{tag}'.format(
                                   previous_tag=tag_prev,
                                   tag=tag
                                )
