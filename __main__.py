@@ -64,12 +64,13 @@ if __name__ == '__main__':
     for repo in repos:
         team, repo = repo.split('/')
 
-        if cmd == 'create':
-            path = git_path(repo)
+        path = git_path(repo)
 
+        if cmd == 'create':
             # Fetch the latest tags
             # (where origin is the upstream remote repo).
             git(path, 'fetch --tags')
+            git(path, 'pull')
 
             # Identify the latest tag.
             tag_prev = git(path,
@@ -93,3 +94,14 @@ if __name__ == '__main__':
                                )
             ))
             git(path, 'push --tags')
+
+        elif cmd == 'delete':
+            # Fetch the latest tags
+            # (where origin is the upstream remote repo).
+            git(path, 'fetch --tags')
+
+            # Delete tag.
+            git(path, 'tag -d %s' % tag)
+
+            # Delete remote tag.
+            git(path, 'push origin :%s' % tag)
