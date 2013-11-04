@@ -29,7 +29,6 @@ def github_url(team, repo, url=None):
 
 def pbcopy(data):
     """Copy to clipboard on Mac OS X."""
-    print data
     pb = _open_pipe(['pbcopy'])
     pb.stdin.write(data)
     pb.stdin.close()
@@ -61,6 +60,8 @@ if __name__ == '__main__':
     repos = [x.strip() for x in open('repos').readlines()
              if not x.strip().startswith('#')]
 
+    urls = []
+
     for repo in repos:
         team, repo = repo.split('/')
 
@@ -82,17 +83,20 @@ if __name__ == '__main__':
             git(path, 'tag %s' % tag)
 
             # Point to the releases permalink page.
-            print '* Tagged {team}/{repo}: {tag}'.format(
-                team=team, repo=repo, tag=tag)
-            print github_url(team, repo, '/releases/{tag}'.format(tag=tag))
+            #print '* Tagged {team}/{repo}: {tag}'.format(
+            #    team=team, repo=repo, tag=tag)
+            #print github_url(team, repo, '/releases/{tag}'.format(tag=tag))
 
             # Point to the tag comparison page.
-            pbcopy(github_url(team, repo,
-                              '/compare/{previous_tag}...{tag}'.format(
-                                  previous_tag=tag_prev,
-                                  tag=tag
-                               )
-            ))
+            url = github_url(
+                team, repo, '/compare/{previous_tag}...{tag}'.format(
+                    previous_tag=tag_prev, tag=tag
+                )
+            )
+            print url
+            urls.append(url)
+
+            # Push tag.
             git(path, 'push --tags')
 
         elif cmd == 'delete':
@@ -105,3 +109,6 @@ if __name__ == '__main__':
 
             # Delete remote tag.
             git(path, 'push origin :%s' % tag)
+
+        if urls:
+            pbcopy(urls.join('\n'))
