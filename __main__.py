@@ -2,7 +2,7 @@ import os
 import subprocess
 import sys
 
-GIT_PATH = '/opt/'
+GIT_ROOT_PATH = '/tmp/'
 
 
 def _open_pipe(cmd, cwd=None):
@@ -10,8 +10,27 @@ def _open_pipe(cmd, cwd=None):
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, cwd=cwd)
 
-def git_path(repo):
-    return os.path.join(GIT_PATH, repo)
+
+def get_team_repo(remote_url):
+    """
+    Takes remote URL (e.g., `git@github.com:mozilla/fireplace.git`)
+    and returns team/repo pair (e.g., `mozilla/rocketfuel`)
+
+    """
+    if ':' not in remote_url:
+        return remote_url
+    return remote_url.split(':')[1].replace('.git', '')
+
+
+def git_path(remote_url):
+    repo = get_team_repo(remote_url).replace('/', '___')
+    dir_name = os.path.join(GIT_ROOT_PATH, repo)
+    if not os.path.exists(dir_name):
+        os.makedirs(dir_name)
+        git(dir_name,
+            'clone {remote_url} {dir_name}'.format(remote_url=remote_url,
+                                                   dir_name=dir_name))
+    return dir_name
 
 
 def git(path, args):
@@ -62,10 +81,10 @@ if __name__ == '__main__':
 
     urls = []
 
-    for repo in repos:
-        team, repo = repo.split('/')
+    for remote_url in repos:
+        path = git_path(remote_url)
 
-        path = git_path(repo)
+        team, repo = get_team_repo(remote_url).split('/')
 
         if cmd == 'create':
             # Fetch the latest tags
@@ -111,4 +130,4 @@ if __name__ == '__main__':
             git(path, 'push origin :%s' % tag)
 
         if urls:
-            pbcopy(urls.join('\n'))
+            pbcopy('\n'.join(urls))
