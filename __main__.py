@@ -70,6 +70,7 @@ if __name__ == '__main__':
         usage(args)
 
     cmd, tag = args[1:3]
+    sha = None
     try:
         sha = args[3]
     except IndexError:
@@ -118,10 +119,48 @@ if __name__ == '__main__':
             # Push tag.
             git(path, 'push --tags')
 
-        elif cmd == 'delete':
-            # Fetch the latest tags
-            # (where origin is the upstream remote repo).
+        elif cmd == 'cherrypick':
+            # Fetch the latest tags and code.
             git(path, 'fetch --tags')
+            git(path, 'pull')
+
+            # Checkout existing tag.
+            git(path, 'checkout %s' % tag)
+
+            # Delete existing tag.
+            git(path, 'tag -d %s' % tag)
+
+            # Delete existing remote tag.
+            git(path, 'push origin :%s' % tag)
+
+            # Cherrypick commit.
+            git(path, 'cherry-pick %s' % sha)
+
+            # Create new tag.
+            git(path, 'tag %s' % tag)
+
+            # Push new tag.
+            git(path, 'push --tags')
+
+            # Identify the latest tag.
+            tag_prev = git(path,
+                'for-each-ref refs/tags --sort=-authordate '
+                '--format="%(refname)" --count=1')
+            tag_prev = tag_prev.replace('refs/tags/', '').strip('\'"\n')
+
+            # Point to the tag comparison page.
+            url = github_url(
+                team, repo, '/compare/{previous_tag}...{tag}'.format(
+                    previous_tag=tag_prev, tag=tag
+                )
+            )
+            print url
+            urls.append(url)
+
+        elif cmd == 'delete':
+            # Fetch the latest tags and code.
+            git(path, 'fetch --tags')
+            git(path, 'pull')
 
             # Delete tag.
             git(path, 'tag -d %s' % tag)
@@ -129,5 +168,5 @@ if __name__ == '__main__':
             # Delete remote tag.
             git(path, 'push origin :%s' % tag)
 
-        if urls:
-            pbcopy('\n'.join(urls))
+    if urls:
+        pbcopy('\n'.join(urls))
