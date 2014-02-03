@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 
+
 GIT_ROOT_PATH = '/tmp/'
 
 
@@ -94,9 +95,8 @@ if __name__ == '__main__':
             git(path, 'pull')
 
             # Identify the latest tag.
-            tag_prev = git(path,
-                'for-each-ref refs/tags --sort=-authordate '
-                '--format="%(refname)" --count=1')
+            tag_prev = git(path, 'for-each-ref refs/tags --sort=-authordate '
+                           '--format="%(refname)" --count=1')
             tag_prev = tag_prev.replace('refs/tags/', '').strip('\'"\n')
 
             # Tag master.
@@ -143,9 +143,8 @@ if __name__ == '__main__':
             git(path, 'push --tags')
 
             # Identify the latest tag.
-            tag_prev = git(path,
-                'for-each-ref refs/tags --sort=-authordate '
-                '--format="%(refname)" --count=1')
+            tag_prev = git(path, 'for-each-ref refs/tags --sort=-authordate '
+                           '--format="%(refname)" --count=1')
             tag_prev = tag_prev.replace('refs/tags/', '').strip('\'"\n')
 
             # Point to the tag comparison page.
