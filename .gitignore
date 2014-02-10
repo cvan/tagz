@@ -2,11 +2,7 @@
 *.egg-info
 *.py[cod]
 *.so
-.coverage
-.installed.cfg
-.mr.developer.cfg
-.tox
-__pycache__
+.DS_Store
 bin
 build
 develop-eggs
