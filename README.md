@@ -14,20 +14,20 @@ Install using pip:
 
 * To create a tag:
 
-    $ python tagz.py -r mozilla/fireplace -c create -t 2014.02.11
+    python tagz.py -r mozilla/fireplace -c create -t 2014.02.11
 
 * To create multiple tags:
 
-    $ python tagz.py -r mozilla/fireplace,mozilla/zamboni -c create -t 2014.02.11
+    python tagz.py -r mozilla/fireplace,mozilla/zamboni -c create -t 2014.02.11
 
 * To delete a tag:
 
-    $ python tagz.py -r mozilla/fireplace -c delete -t 2014.02.11
+    python tagz.py -r mozilla/fireplace -c delete -t 2014.02.11
 
 * To cherry-pick a commit onto a tag:
 
-    $ python tagz.py -r mozilla/fireplace -c cherrypick -t 2014.02.11 -s b4dc0ffee
+    python tagz.py -r mozilla/fireplace -c cherrypick -t 2014.02.11 -s b4dc0ffee
 
 * To remove a commit from a tag:
 
-    $ python tagz.py -r mozilla/fireplace -c revert -t 2014.02.11 -s b4dc0ffee
+    python tagz.py -r mozilla/fireplace -c revert -t 2014.02.11 -s b4dc0ffee
