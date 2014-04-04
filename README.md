@@ -18,7 +18,7 @@ Install using pip:
 
 * To create multiple tags:
 
-        python tagz.py -r mozilla/fireplace,mozilla/zamboni -c create -t 2014.02.11
+        python tagz.py -r mozilla/monolith,mozilla/solitude,mozilla/webpay,mozilla/commbadge,mozilla/fireplace,mozilla/marketplace-stats,mozilla/monolith-aggregator,mozilla/rocketfuel,mozilla/zamboni -c create -t 2014.02.11
 
 * To delete a tag:
 
