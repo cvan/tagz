@@ -26,6 +26,7 @@ Sample usage:
 
 """
 
+import datetime
 import os
 import platform
 import subprocess
@@ -35,6 +36,7 @@ import argparse
 
 GIT_ROOT_PATH = '/tmp/'
 VERBOSE = False
+DRYRUN = False
 
 
 def _open_pipe(cmd, cwd=None):
@@ -85,6 +87,9 @@ def get_github_url(team, repo, url=''):
 
 
 def git(path, args):
+    if DRYRUN:
+        print 'cd %s; git %s' % (path, args)
+        return ''
     stdout, stderr = _open_pipe(['git'] + args.split(' '),
                                 cwd=path).communicate()
     if VERBOSE and stderr:
@@ -130,7 +135,7 @@ def pbcopy(data):
 
 
 def main():
-    global VERBOSE
+    global VERBOSE, DRYRUN
 
     p = argparse.ArgumentParser(description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -147,10 +152,23 @@ def main():
         help='name of git tag', required=True)
     p.add_argument('-v', '--verbose', dest='verbose', action='store_true',
         help='make lots of noise', default=False)
+    p.add_argument('-n', '--dry-run', dest='dryrun', action='store_true',
+        help="Show git actions to perform but don't do them", default=False)
     args = p.parse_args()
 
-    cmd, repo, sha, tag, VERBOSE = (args.cmd, args.repo, args.sha, args.tag,
-                                    args.verbose)
+    cmd, repo, sha, tag, VERBOSE, DRYRUN = (args.cmd, args.repo, args.sha,
+                                            args.tag, args.verbose,
+                                            args.dryrun)
+
+    try:
+        tagdate = datetime.datetime.strptime(tag, '%Y.%m.%d')
+        if tagdate.weekday() == 4:
+            p.error('%s is a Friday. Did you really mean %s?'
+                    % (tag, (tagdate + datetime.timedelta(days=4)
+                   ).strftime('%Y.%m.%d')))
+    except ValueError:
+        # Not parseable as a date, no big deal.
+        pass
 
     if cmd in ('cherrypick', 'revert') and not sha:
         p.error(
@@ -207,14 +225,14 @@ def main():
                      .replace('"', '')
                      .replace("'", '')
                      .split('\n'))
-
-        # Get the URL of the tag comparison page.
-        urls.append(get_github_url(
-            team, repo, '/compare/{previous_tag}...{latest_tag}'.format(
-                previous_tag=prev_tags[1],
-                latest_tag=prev_tags[0]
-            )
-        ))
+        if not DRYRUN:
+            # Get the URL of the tag comparison page.
+            urls.append(get_github_url(
+                team, repo, '/compare/{previous_tag}...{latest_tag}'.format(
+                    previous_tag=prev_tags[1],
+                    latest_tag=prev_tags[0]
+                )
+            ))
 
     if urls:
         urls = '\n'.join(urls)
