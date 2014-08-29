@@ -16,6 +16,10 @@ Install using pip:
 
         python tagz.py -r mozilla/fireplace -c create -t 2014.02.11
 
+* To create a tag from a particular revision:
+
+        python tagz.py -r mozilla/fireplace -c create -t 2014.02.11 -s 2014.02.07
+
 * To create multiple tags:
 
         python tagz.py -r mozilla/monolith,mozilla/solitude,mozilla/webpay,mozilla/commbadge,mozilla/fireplace,mozilla/marketplace-stats,mozilla/monolith-aggregator,mozilla/rocketfuel,mozilla/zamboni -c create -t 2014.02.11

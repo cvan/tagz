@@ -8,6 +8,10 @@ Sample usage:
 
     $ python tagz.py -r mozilla/fireplace -c create -t 2014.02.11
 
+* To create a tag from a particular revision:
+
+    $ python tagz.py -r mozilla/fireplace -c create -t 2014.02.11 -s 2014.02.07
+
 * To create multiple tags:
 
     $ python tagz.py -r mozilla/fireplace,mozilla/zamboni -c create -t 2014.02.11
@@ -175,7 +179,8 @@ def main():
 
     if cmd in ('cherrypick', 'revert') and not sha:
         p.error(
-            'argument -s/--sha is required is when cherry-picking a commit')
+            'argument -s/--sha is required is when cherry-picking/reverting '
+            'a commit')
 
     repos = [get_remote_url(x.strip()) for x in repo.split(',')]
     urls = []
@@ -184,14 +189,20 @@ def main():
         path = get_git_path(remote_url)
         team, repo = get_team_repo(remote_url).split('/')
 
+        # Use default branch (most likely `master`) when creating a new tag.
+        default_sha = git(path, 'rev-parse origin/HEAD')
+
         # Check out master.
-        git(path, 'checkout master')
+        git(path, 'checkout %s' % default_sha)
 
         # Fetch the latest tags and code.
         git(path, 'fetch --tags')
         git(path, 'pull --rebase')
 
         if cmd == 'create':
+            # Check out a particular revision.
+            git(path, 'checkout %s' % default_sha)
+
             git_create_tag(path, tag)
 
         elif cmd == 'cherrypick':
