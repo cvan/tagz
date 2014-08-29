@@ -174,6 +174,9 @@ def main():
         p.error(
             'argument -s/--sha is required is when cherry-picking a commit')
 
+    if tag == 'YYYY.MM.DD':
+        p.error('tag should be the date of push, not: %s' % tag)
+
     repos = [get_remote_url(x.strip()) for x in repo.split(',')]
     urls = []
 
