@@ -160,6 +160,9 @@ def main():
                                             args.tag, args.verbose,
                                             args.dryrun)
 
+    if tag == 'YYYY.MM.DD':
+        p.error('tag should be the date of push, not: %s' % tag)
+
     try:
         tagdate = datetime.datetime.strptime(tag, '%Y.%m.%d')
         if tagdate.weekday() == 4:
@@ -173,9 +176,6 @@ def main():
     if cmd in ('cherrypick', 'revert') and not sha:
         p.error(
             'argument -s/--sha is required is when cherry-picking a commit')
-
-    if tag == 'YYYY.MM.DD':
-        p.error('tag should be the date of push, not: %s' % tag)
 
     repos = [get_remote_url(x.strip()) for x in repo.split(',')]
     urls = []
