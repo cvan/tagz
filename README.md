@@ -3,14 +3,14 @@
 This is a script to automatically tag repos on GitHub.
 
 
-# Installation
+## Installation
 
 Install using pip:
 
     pip install -r requirements.txt
 
 
-# Sample usage
+## Sample usage
 
 * To create a tag:
 
@@ -31,3 +31,8 @@ Install using pip:
 * To remove a commit from a tag:
 
         python tagz.py -r mozilla/fireplace -c revert -t 2014.02.11 -s b4dc0ffee
+
+
+## Authors
+
+[See list of authors.](https://github.com/cvan/tagz/blob/master/AUTHORS.md)
