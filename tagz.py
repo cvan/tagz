@@ -150,10 +150,10 @@ def main():
         help='sha1 hash of git commit')
     p.add_argument('-t', '--tag', dest='tag', action='store',
         help='name of git tag', required=True)
-    p.add_argument('-v', '--verbose', dest='verbose', action='store_true',
-        help='make lots of noise', default=False)
-    p.add_argument('-n', '--dry-run', dest='dryrun', action='store_true',
-        help="Show git actions to perform but don't do them", default=False)
+    p.add_argument('-v', '--verbose', dest='verbose', action='store',
+        help='make lots of noise', default=VERBOSE)
+    p.add_argument('-n', '--dry-run', dest='dryrun', action='store',
+        help="Show git actions to perform but don't do them", default=DRYRUN)
     args = p.parse_args()
 
     cmd, repo, sha, tag, VERBOSE, DRYRUN = (args.cmd, args.repo, args.sha,
