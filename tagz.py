@@ -221,7 +221,7 @@ def main():
 
         # Identify the latest two tags.
         prev_tags = (git(path,
-                         'for-each-ref refs/tags --sort=-committerdate '
+                         'for-each-ref refs/tags --sort=-refname --sort=-committerdate '
                          '--format="%(refname)" --count=2')
                      .replace('refs/tags/', '')
                      .strip(' \n')
