@@ -99,7 +99,7 @@ def git(path, args):
 
 def git_create_tag(path, tag):
     # Create new tag.
-    git(path, 'tag %s' % tag)
+    git(path, 'tag -a %s' % tag)
 
     # Push tag.
     git(path, 'push --tags')
