@@ -16,6 +16,14 @@ Install using pip:
 
         python tagz.py -r mozilla/fireplace -c create -t 2014.02.11
 
+NOTE: annotated tags are used by default (-a). If you want lightweight tags,
+      you can pass -l:
+
+    $ python tagz.py -l -r mozilla/fireplace -c create -t 2014.02.11
+
+ALSO: this script will use whatever type of tag the first found refname is.
+      You cannot use this script to mix use of the two in the same repo.
+
 * To create multiple tags:
 
         python tagz.py -r mozilla/monolith,mozilla/solitude,mozilla/webpay,mozilla/commbadge,mozilla/fireplace,mozilla/marketplace-stats,mozilla/monolith-aggregator,mozilla/rocketfuel,mozilla/zamboni -c create -t 2014.02.11
