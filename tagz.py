@@ -8,9 +8,17 @@ Sample usage:
 
     $ python tagz.py -r mozilla/fireplace -c create -t 2014.02.11
 
+NOTE: annotated tags are used by default (-a). If you want lightweight tags,
+      you can pass -l:
+
+    $ python tagz.py -l -r mozilla/fireplace -c create -t 2014.02.11
+
+ALSO: this script will use whatever type of tag the first found refname is.
+      You cannot use this script to mix use of the two in the same repo.
+
 * To create multiple tags:
 
-    $ python tagz.py -r mozilla/fireplace,mozilla/zamboni -c create -t 2014.02.11
+    $ python tagz.py -r mozilla/zamboni,mozilla/fireplace -c create -t 2014.02.11
 
 * To delete a tag:
 
@@ -86,20 +94,27 @@ def get_github_url(team, repo, url=''):
         team=team, repo=repo, url=url)
 
 
-def git(path, args):
+def git(path, args, limit=None):
     if DRYRUN:
         print 'cd %s; git %s' % (path, args)
         return ''
-    stdout, stderr = _open_pipe(['git'] + args.split(' '),
-                                cwd=path).communicate()
+    if limit:
+        stdout, stderr = _open_pipe(['git'] + args.split(' ', limit),
+                                    cwd=path).communicate()
+    else:
+        stdout, stderr = _open_pipe(['git'] + args.split(' '),
+                                    cwd=path).communicate()
     if VERBOSE and stderr:
         print stderr
     return stderr or stdout
 
 
-def git_create_tag(path, tag):
-    # Create new tag.
-    git(path, 'tag -a %s -m "tag for %s"' % (tag, tag))
+def git_create_tag(path, tag, annotated):
+    # Create new tag. Assumes tag has no spaces.
+    if annotated:
+        git(path, 'tag -a %s -m tag for %s' % (tag, tag), 4)
+    else:
+        git(path, 'tag %s' % tag)
 
     # Push tag.
     git(path, 'push --tags')
@@ -134,6 +149,22 @@ def pbcopy(data):
     return pb.wait()
 
 
+def resolve_annotate(path, use_annotate):
+    """Be internally consistent with tag type."""
+
+    retval = use_annotate
+    first_tag = (git(path, 'for-each-ref refs/tags --sort=refname --count=1 '
+                     '--format="%(taggerdate:raw)|%(refname:strip=2)"')
+                 .strip(' \n')
+                 .replace('"', '')
+                 .split('|'))
+    if len(first_tag) > 1:
+        if ((use_annotate and first_tag[0] == '') or
+            (not use_annotate and first_tag[0] != '')):
+            retval = not use_annotate
+    return retval
+
+
 def main():
     global VERBOSE, DRYRUN
 
@@ -154,11 +185,17 @@ def main():
         help='make lots of noise', default=VERBOSE)
     p.add_argument('-n', '--dry-run', dest='dryrun', action='store',
         help="Show git actions to perform but don't do them", default=DRYRUN)
+    group = p.add_mutually_exclusive_group(required=False)
+    group.add_argument('-a', '--annotate', dest='useannotate',
+        action='store_true')
+    group.add_argument('-l', '--lightweight', dest='useannotate',
+        action='store_false')
+    p.set_defaults(useannotate=True)
     args = p.parse_args()
 
-    cmd, repo, sha, tag, VERBOSE, DRYRUN = (args.cmd, args.repo, args.sha,
-                                            args.tag, args.verbose,
-                                            args.dryrun)
+    cmd, repo, sha, tag = (args.cmd, args.repo, args.sha, args.tag)
+    VERBOSE, DRYRUN, use_annotated = (args.verbose, args.dryrun,
+                                      args.useannotate)
 
     if tag == 'YYYY.MM.DD':
         p.error('tag should be the date of push, not: %s' % tag)
@@ -191,8 +228,15 @@ def main():
         git(path, 'fetch --tags')
         git(path, 'pull --rebase')
 
+        set_annotate = resolve_annotate(path, use_annotated)
+        if set_annotate != use_annotated:
+            if set_annotate:
+                print 'Convention is to use annotated tags. Conforming...'
+            else:
+                print 'Convention is to use lightweight tags. Conforming...'
+
         if cmd == 'create':
-            git_create_tag(path, tag)
+            git_create_tag(path, tag, set_annotate)
 
         elif cmd == 'cherrypick':
             # Check out existing tag.
@@ -203,7 +247,7 @@ def main():
             # Cherry-pick commit.
             git(path, 'cherry-pick %s' % sha)
 
-            git_create_tag(path, tag)
+            git_create_tag(path, tag, set_annotate)
 
         elif cmd == 'delete':
             git_delete_tag(path, tag)
@@ -217,18 +261,41 @@ def main():
             # Revert commit.
             git(path, 'revert %s' % sha)
 
-            git_create_tag(path, tag)
+            git_create_tag(path, tag, set_annotate)
 
         # Identify the latest two tags.
-        prev_tags = (git(path,
-                         'for-each-ref refs/tags --sort=-refname --sort=-committerdate '
-                         '--format="%(refname)" --count=2')
-                     .replace('refs/tags/', '')
+        # This will only work if a repo:
+        #   a) contains strictly lightweight OR annotated tags
+        #   b) has a defined tag syntax, e.g. /YYYY\.MM\.DD(-\d)?/
+        #   c) only tags in linear sequence
+        # Because lightweight tags point to commits and annotated
+        # tags are explicit objects, you can't rely on dereferencing
+        # fields between the two for comparisons.
+        # Meaning, something like this:
+        #   git for-each-ref --format='%(*committerdate:raw)%(committerdate:raw) %(refname) \
+        #    %(*objectname) %(objectname)' refs/tags | sort -n -r | awk '{ print $3; }' | head -2
+        # won't work because the %(committerdate) field is unreliable
+        # as a timeline sequence between lightweight and annotated tags.
+        # Which is why "latest" tags assume that tags are not
+        # applied to points in a branch prior to another tag.
+
+        # Be internally consistent:
+        formatstring = 'for-each-ref refs/tags --format="%(refname:strip=2)" --count=2 '
+        if set_annotate:
+            formatstring += '--sort=-refname --sort=-*committerdate'
+        else:
+            formatstring += '--sort=-refname --sort=-committerdate'
+
+        prev_tags = (git(path, formatstring)
                      .strip(' \n')
                      .replace('"', '')
                      .replace("'", '')
                      .split('\n'))
+
         if not DRYRUN:
+            if len(prev_tags) == 1:
+                prev_tags.append('master')
+
             # Get the URL of the tag comparison page.
             urls.append(get_github_url(
                 team, repo, '/compare/{previous_tag}...{latest_tag}'.format(
